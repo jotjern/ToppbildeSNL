@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bildeutsnitt</title>
+    <style>
+        img {
+            user-drag: none;
+            -webkit-user-drag: none;
+            user-select: none;
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+        }
+
+        ul li img {
+            width: 100px;
+            margin: 0;
+            padding: 0;
+            outline: 2px solid black;
+            outline-offset: -2px;
+        }
+        ul li {
+            display: inline-block;
+            background-color: white;
+        }
+
+        ul {
+            position: absolute;
+            top: 0;
+            margin-top: 0;
+            padding: 10px;
+            z-index: 100;
+            background-color: white;
+        }
+
+        #vignette {
+            left: 0;
+        }
+
+        #upload-download {
+            right: 0;
+        }
+
+        img.selected {
+            outline: 2px solid red;
+            outline-offset: -2px;
+        }
+    </style>
+</head>
+<body style="margin: 0; overflow: hidden">
+    <input type="file" id="uploadimage" accept="image/png, image/jpeg" style="z-index: 1; position: absolute" />
+    <img src="" id="image" style="position: absolute; width: 100vw" alt>
+    <ul id="upload-download">
+        <li><img src="arrow_down.png" onclick="save_image()" style="width: 60px; cursor: pointer" alt></li>
+        <li><img src="arrow_up.png" onclick="upload_image()" style="width: 60px; cursor: pointer" alt></li>
+    </ul>
+    <ul id="vignettes">
+        <li><img alt src="vignette/0.png"></li>
+        <li><img alt src="vignette/1.png"></li>
+        <li><img alt src="vignette/2.png"></li>
+        <li><img alt src="vignette/3.png"></li>
+    </ul>
+    <div> <!-- These are the black bars around the focused area -->
+        <div style="top: 10vw; bottom: 0; left: 0; width: 10vw; background-color: rgba(0, 0, 0, 0.5); position: absolute"></div>
+        <div style="top: 10vw; bottom: 0; right: 0; width: 10vw; background-color: rgba(0, 0, 0, 0.5); position: absolute"></div>
+        <div style="top: 0; left: 0; right: 0; height: 10vw; background-color: rgba(0, 0, 0, 0.5); position: absolute"></div>
+        <div style="left: 10vw; right: 10vw; bottom: 0; top: calc(80vw * (1172 / 3088)); background-color: rgba(0, 0, 0, 0.5); position: absolute"></div>
+    </div>
+    <canvas id="canvas" hidden style="position: fixed; z-index: 10; bottom: 0; right: 0; width: 40vw"></canvas>
+    <img id="vignette" alt src="" hidden>
+    <script>
+        // 3088x1172
+        const file_uploader = document.getElementById("uploadimage");
+        const vignette = document.getElementById("vignette");
+        const canvas = document.getElementById("canvas");
+        const image = document.getElementById("image");
+
+        const image_position = {x: 25, y: 15, zoom: 1};
+
+        file_uploader.onchange = e => {
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = e => {
+                    image.src = e.target.result;
+                    update_image();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function upload_image() {
+            file_uploader.click();
+        }
+
+        function save_image(preview) {
+            const x = (image_position.x - 10) / 100 * 3088;
+            const y = (image_position.y - 10) / 100 * (image.height / image.width) * 2 * 1172 * 2;
+            const width = 3088 * image_position.zoom / 0.8;
+            const height = 3088 * (image.height / image.width) * image_position.zoom / 0.8;
+            canvas.width = 3088;
+            canvas.height = 1172;
+            const ctx = canvas.getContext("2d");
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, 3088, 1172);
+            ctx.drawImage(image, x, y, width, height);
+            if (vignette.src) {
+                ctx.globalAlpha = 0.5;
+                ctx.drawImage(vignette, 0, 0, 3088, 1172);
+            }
+            if (preview) return;
+            const data = canvas.toDataURL("image/png");
+            const a = document.createElement("a");
+            a.href = data;
+            a.download = "bildeutsnitt.png";
+            a.click();
+        }
+
+        function update_image() {
+            image.style.left = image_position.x + "vw";
+            image.style.top  = image_position.y + "vw";
+            image.style.width = image_position.zoom * 100 + "vw";
+        }
+
+        let mouse_down = false;
+        document.onmousedown = e => { if (e.button === 0) mouse_down = true }
+        document.onmouseup = e => { if (e.button === 0) mouse_down = false }
+        document.onmousemove = e => {
+            if (mouse_down) {
+                image_position.x += 100 * e.movementX / window.innerWidth;
+                image_position.y += 100 * e.movementY / window.innerHeight;
+                update_image();
+            }
+        };
+        document.onkeydown = e => {
+            switch (e.key) {
+                case "+":
+                    image_position.zoom += 0.1;
+                    image_position.x -= 2;
+                    image_position.y -= 2;
+                    update_image();
+                    break;
+                case "-":
+                    image_position.zoom -= 0.1;
+                    image_position.x += 2
+                    image_position.y += 2;
+                    update_image();
+                    break;
+                case "s":
+                    save_image();
+                    break;
+                case "d":
+                    save_image(true)
+                    break;
+            }
+        }
+
+        Array.from(document.querySelectorAll("ul#vignettes li img")).forEach(img => {
+            img.onclick = e => {
+                vignette.src = img.src;
+                document.querySelectorAll(".selected").forEach(i => i.classList.remove("selected"));
+                img.classList.add("selected");
+            };
+        });
+
+        update_image();
+
+    </script>
+
+</body>
+</html>
