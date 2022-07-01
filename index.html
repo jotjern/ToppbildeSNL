@@ -76,13 +76,14 @@
         <div style="top: 10vw; bottom: 0; left: 0; width: 10vw; position: absolute"></div>
         <div style="top: 10vw; bottom: 0; right: 0; width: 10vw; position: absolute"></div>
         <div style="top: 0; left: 0; right: 0; height: 10vw; position: absolute"></div>
-        <div style="left: 10vw; right: 10vw; bottom: 0; top: calc(80vw * (1172 / 3088)); position: absolute"></div>
+        <div style="left: 10vw; right: 10vw; bottom: 0; top: calc(10vw + (80vw * (1172/3088))); position: absolute"></div>
     </div>
-    <div style="left: 10vw; right: 10vw; top: 10vw; bottom: calc(100vh - calc(80vw * (1172 / 3088))); position: absolute">
+    <div style="left: 10vw; width: 80vw; top: 10vw; height: calc(80vw * (1172/3088)); position: absolute">
         <img src="" id="vignette" hidden style="width: 100%; height: 100%; opacity: 0.5" alt>
     </div>
     <canvas id="canvas" hidden style="position: fixed; z-index: 10; bottom: 0; right: 0; width: 40vw"></canvas>
     <script>
+        const resolution = [1544, 586];
         // 3088x1172
         const preview_toggler = document.getElementById("toggle-preview");
         const file_uploader = document.getElementById("uploadimage");
@@ -98,7 +99,7 @@
             }
         }
 
-        const image_position = {x: 25, y: 15, zoom: 1};
+        const image_position = {x: 0, y: 0, zoom: 1};
 
         file_uploader.onchange = e => {
             if (e.target.files.length > 0) {
@@ -117,19 +118,19 @@
         }
 
         function save_image(preview) {
-            const x = (image_position.x - 10) / 100 * 3088;
-            const y = (image_position.y - 10) / 100 * (image.height / image.width) * 2 * 1172 * 2;
-            const width = 3088 * image_position.zoom / 0.8;
-            const height = 3088 * (image.height / image.width) * image_position.zoom / 0.8;
-            canvas.width = 3088;
-            canvas.height = 1172;
+            const x = (image_position.x - 10) / 80 * resolution[0];
+            const y = (image_position.y - 10) / 80 * resolution[0];
+            const width = resolution[0] * image_position.zoom / 0.8;
+            const height = resolution[0] * (image.height / image.width) * image_position.zoom / 0.8;
+            canvas.width = resolution[0];
+            canvas.height = resolution[1];
             const ctx = canvas.getContext("2d");
             ctx.fillStyle = "white";
-            ctx.fillRect(0, 0, 3088, 1172);
+            ctx.fillRect(0, 0, resolution[0], resolution[1]);
             ctx.drawImage(image, x, y, width, height);
             if (vignette.src) {
                 ctx.globalAlpha = 0.5;
-                ctx.drawImage(vignette, 0, 0, 3088, 1172);
+                ctx.drawImage(vignette, 0, 0, resolution[0], resolution[1]);
             }
             if (preview) return;
             const data = canvas.toDataURL("image/png");
