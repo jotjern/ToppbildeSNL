@@ -46,6 +46,14 @@
             outline: 2px solid red;
             outline-offset: -2px;
         }
+
+        #border div {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        #border.preview div {
+            background-color: rgba(0, 0, 0, 1);
+        }
     </style>
 </head>
 <body style="margin: 0; overflow: hidden">
@@ -60,21 +68,35 @@
         <li><img alt src="vignette/1.png"></li>
         <li><img alt src="vignette/2.png"></li>
         <li><img alt src="vignette/3.png"></li>
+        <br>
+        <input type="checkbox" aria-label="" id="toggle-preview">
+        <label for="toggle-preview">Forhåndsvisning</label>
     </ul>
-    <div> <!-- These are the black bars around the focused area -->
-        <div style="top: 10vw; bottom: 0; left: 0; width: 10vw; background-color: rgba(0, 0, 0, 0.5); position: absolute"></div>
-        <div style="top: 10vw; bottom: 0; right: 0; width: 10vw; background-color: rgba(0, 0, 0, 0.5); position: absolute"></div>
-        <div style="top: 0; left: 0; right: 0; height: 10vw; background-color: rgba(0, 0, 0, 0.5); position: absolute"></div>
-        <div style="left: 10vw; right: 10vw; bottom: 0; top: calc(80vw * (1172 / 3088)); background-color: rgba(0, 0, 0, 0.5); position: absolute"></div>
+    <div id="border"> <!-- These are the black bars around the focused area -->
+        <div style="top: 10vw; bottom: 0; left: 0; width: 10vw; position: absolute"></div>
+        <div style="top: 10vw; bottom: 0; right: 0; width: 10vw; position: absolute"></div>
+        <div style="top: 0; left: 0; right: 0; height: 10vw; position: absolute"></div>
+        <div style="left: 10vw; right: 10vw; bottom: 0; top: calc(80vw * (1172 / 3088)); position: absolute"></div>
+    </div>
+    <div style="left: 10vw; right: 10vw; top: 10vw; bottom: calc(100vh - calc(80vw * (1172 / 3088))); position: absolute">
+        <img src="" id="vignette" hidden style="width: 100%; height: 100%; opacity: 0.5" alt>
     </div>
     <canvas id="canvas" hidden style="position: fixed; z-index: 10; bottom: 0; right: 0; width: 40vw"></canvas>
-    <img id="vignette" alt src="" hidden>
     <script>
         // 3088x1172
+        const preview_toggler = document.getElementById("toggle-preview");
         const file_uploader = document.getElementById("uploadimage");
         const vignette = document.getElementById("vignette");
         const canvas = document.getElementById("canvas");
         const image = document.getElementById("image");
+
+        preview_toggler.onchange = e => {
+            if (preview_toggler.checked) {
+                document.querySelector("#border").classList.add("preview");
+            } else {
+                document.querySelector("#border").classList.remove("preview");
+            }
+        }
 
         const image_position = {x: 25, y: 15, zoom: 1};
 
@@ -133,6 +155,14 @@
                 update_image();
             }
         };
+        document.addEventListener("wheel", e => {
+            console.log(e);
+            image_position.zoom += e.deltaY / 10000;
+            update_image();
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        }, {passive: false});
         document.onkeydown = e => {
             switch (e.key) {
                 case "+":
@@ -159,8 +189,15 @@
         Array.from(document.querySelectorAll("ul#vignettes li img")).forEach(img => {
             img.onclick = e => {
                 vignette.src = img.src;
-                document.querySelectorAll(".selected").forEach(i => i.classList.remove("selected"));
-                img.classList.add("selected");
+                vignette.removeAttribute("hidden");
+                if (img.classList.contains("selected")) {
+                    vignette.src = "";
+                    vignette.setAttribute("hidden", "true");
+                    img.classList.remove("selected");
+                } else {
+                    document.querySelectorAll(".selected").forEach(i => i.classList.remove("selected"));
+                    img.classList.add("selected");
+                }
             };
         });
 
