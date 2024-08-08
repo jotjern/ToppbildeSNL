@@ -48,6 +48,12 @@
             right: 0;
         }
 
+	#info {
+		position: absolute;
+		left: 0;
+		bottom: 0;
+	}
+
         img.selected {
             outline: 2px solid black;
             outline-offset: -2px;
@@ -88,6 +94,9 @@
         <img src="" id="vignette" hidden style="width: 100%; height: 100%; opacity: 0.5" alt>
     </div>
     <canvas id="canvas" hidden style="position: fixed; z-index: 10; bottom: 0; right: 0; width: 40vw"></canvas>
+    <div id="info">
+    	<h1 style="margin: 5px; text-shadow: 1px 1px 2px black; color: white">Skroll opp/ned for å zoome</h1>
+    </div>
     <script>
         const resolution = [1544, 586];
         // 3088x1172
