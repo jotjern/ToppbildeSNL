@@ -150,10 +150,10 @@
                 ctx.drawImage(vignette, 0, 0, resolution[0], resolution[1]);
             }
             if (preview) return;
-            const data = canvas.toDataURL("image/png");
+            const data = canvas.toDataURL("image/jpg");
             const a = document.createElement("a");
             a.href = data;
-            a.download = "bildeutsnitt.png";
+            a.download = "bildeutsnitt.jpg";
             a.click();
         }
 
